@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Trade of the Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #f0f0f8;
+      --muted: #7878a0;
+      --accent: #7c6ff7;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --green-bg: rgba(52,211,153,0.1);
+      --red: #f87171;
+      --red-bg: rgba(248,113,113,0.1);
+      --amber: #fbbf24;
+      --amber-bg: rgba(251,191,36,0.1);
+      --teal: #2dd4bf;
+      --teal-bg: rgba(45,212,191,0.08);
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 0%, rgba(124,111,247,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 100%, rgba(45,212,191,0.08) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    .container { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+
+    /* Header */
+    .header { margin-bottom: 2.5rem; }
+    .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .logo-mark {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, #7c6ff7, #2dd4bf);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 20px; height: 20px; }
+    .logo-text { font-size: 20px; font-weight: 500; letter-spacing: -0.02em; }
+    .logo-text span { color: var(--accent2); }
+    .tagline { font-size: 13px; color: var(--muted); padding-left: 50px; }
+
+    /* Controls */
+    .controls { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .control-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .control-group label {
+      display: block; font-size: 11px; letter-spacing: 0.08em;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      padding: 6px 13px; border-radius: 20px;
+      border: 1px solid var(--border2); font-size: 13px;
+      cursor: pointer; background: transparent; color: var(--muted);
+      transition: all 0.15s; font-family: inherit;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent2); }
+    .chip.active {
+      background: rgba(124,111,247,0.15);
+      border-color: var(--accent);
+      color: var(--accent2);
+    }
+
+    /* Button */
+    .gen-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #7c6ff7, #6366f1);
+      border: none; border-radius: 12px;
+      color: white; font-size: 15px; font-weight: 500;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.2s; margin-bottom: 2rem;
+      position: relative; overflow: hidden;
+    }
+    .gen-btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, #a78bfa, #818cf8);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .gen-btn:hover::before { opacity: 1; }
+    .gen-btn span { position: relative; }
+    .gen-btn:disabled {
+      background: var(--surface2); color: var(--muted); cursor: not-allowed;
+    }
+    .gen-btn:disabled::before { display: none; }
+
+    /* Thinking */
+    .thinking {
+      display: none; align-items: center; gap: 12px;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px; margin-bottom: 1.5rem;
+    }
+    .thinking.visible { display: flex; }
+    .dots { display: flex; gap: 5px; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,100%{opacity:0.2} 50%{opacity:1} }
+    .thinking-text { font-size: 14px; color: var(--muted); }
+
+    /* Signal card */
+    .signal { display: none; }
+    .signal.visible { display: block; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .asset-info { display: flex; align-items: center; gap: 12px; }
+    .asset-bubble {
+      width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    }
+    .asset-name { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+    .asset-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .dir-badge {
+      padding: 6px 16px; border-radius: 20px;
+      font-size: 14px; font-weight: 500; font-family: 'DM Mono', monospace;
+    }
+    .dir-buy { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+    .dir-sell { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+    /* Metrics row */
+    .metrics {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+    .metric {
+      padding: 14px 12px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .metric:last-child { border-right: none; }
+    .metric-label { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; }
+    .metric-val { font-size: 15px; font-weight: 500; font-family: 'DM Mono', monospace; }
+    .val-entry { color: var(--text); }
+    .val-sl { color: var(--red); }
+    .val-tp { color: var(--green); }
+    .val-rr { color: var(--teal); }
+
+    /* Body */
+    .card-body { padding: 1.25rem 1.5rem; }
+    .section-label {
+      font-size: 10px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    /* Score bars */
+    .score-rows { margin-bottom: 1.25rem; }
+    .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+    .score-name { font-size: 12px; color: var(--muted); width: 140px; flex-shrink: 0; }
+    .bar-bg {
+      flex: 1; height: 5px; background: var(--surface2);
+      border-radius: 3px; overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .score-num { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--muted); width: 32px; text-align: right; }
+
+    .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+    /* Bullets */
+    .bullets { list-style: none; }
+    .bullets li {
+      font-size: 13px; color: var(--muted);
+      padding: 4px 0 4px 18px;
+      position: relative; line-height: 1.6;
+    }
+    .bullets li::before {
+      content: '';
+      position: absolute; left: 0; top: 11px;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* Footer */
+    .card-footer {
+      padding: 10px 1.5rem;
+      background: rgba(255,255,255,0.02);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-meta { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+    .footer-right { display: flex; align-items: center; gap: 10px; }
+    .score-badge {
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 500; font-family: 'DM Mono', monospace;
+    }
+    .badge-ok { background: var(--green-bg); color: var(--green); }
+    .badge-warn { background: var(--amber-bg); color: var(--amber); }
+    .badge-bad { background: var(--red-bg); color: var(--red); }
+
+    .reset-btn {
+      padding: 6px 14px; border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: transparent; color: var(--muted);
+      font-size: 12px; cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .reset-btn:hover { background: var(--surface2); color: var(--text); }
+
+    /* Error */
+    .error-msg {
+      display: none; padding: 1rem 1.5rem;
+      background: var(--red-bg); border: 1px solid rgba(248,113,113,0.2);
+      border-radius: 12px; color: var(--red); font-size: 14px;
+      margin-bottom: 1rem;
+    }
+    .error-msg.visible { display: block; }
+
+    @media (max-width: 500px) {
+      .control-row { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2,1fr); }
+      .metric:nth-child(2) { border-right: none; }
+      .metric:nth-child(3) { border-top: 1px solid var(--border); }
+      .metric:nth-child(4) { border-top: 1px solid var(--border); border-right: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20" fill="none">
+          <polyline points="2,15 7,9 11,12 18,4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="18" cy="4" r="2" fill="white"/>
+        </svg>
+      </div>
+      <div class="logo-text">The Trade of the <span>Day</span></div>
+    </div>
+    <div class="tagline">Señal técnica IA · Capitaria Chile · MT5 · America/Santiago</div>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <div class="control-group">
+        <label>Mercado</label>
+        <div class="chips" id="market-chips">
+          <div class="chip active" data-val="Todos">Todos</div>
+          <div class="chip" data-val="Forex">Forex</div>
+          <div class="chip" data-val="Índices">Índices</div>
+          <div class="chip" data-val="Commodities">Commodities</div>
+          <div class="chip" data-val="Crypto">Crypto</div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>Timeframe</label>
+        <div class="chips" id="tf-chips">
+          <div class="chip active" data-val="Auto">Auto</div>
+          <div class="chip" data-val="M5/M15">M5/M15</div>
+          <div class="chip" data-val="H1/H4">H1/H4</div>
+        </div>
+      </div>
+    </div>
+    <div class="control-group">
+      <label>Modo</label>
+      <div class="chips" id="mode-chips">
+        <div class="chip active" data-val="Auto (mejor setup)">Auto</div>
+        <div class="chip" data-val="Scalping">Scalping</div>
+        <div class="chip" data-val="Swing">Swing</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="gen-btn" id="gen-btn" onclick="generate()">
+    <span>Generar trade del día →</span>
+  </button>
+
+  <div class="error-msg" id="error-msg"></div>
+  <div class="thinking" id="thinking">
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <span class="thinking-text">Analizando mercados en vivo y construyendo señal técnica...</span>
+  </div>
+
+  <div class="signal" id="signal">
+    <div class="card">
+      <div class="card-header">
+        <div class="asset-info">
+          <div class="asset-bubble" id="a-icon"></div>
+          <div>
+            <div class="asset-name" id="a-name"></div>
+            <div class="asset-sub" id="a-sub"></div>
+          </div>
+        </div>
+        <div class="dir-badge" id="a-dir"></div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Entrada</div><div class="metric-val val-entry" id="m-entry"></div></div>
+        <div class="metric"><div class="metric-label">Stop Loss</div><div class="metric-val val-sl" id="m-sl"></div></div>
+        <div class="metric"><div class="metric-label">Take Profit</div><div class="metric-val val-tp" id="m-tp"></div></div>
+        <div class="metric"><div class="metric-label">R : R</div><div class="metric-val val-rr" id="m-rr"></div></div>
+      </div>
+      <div class="card-body">
+        <div class="section-label">Scoring técnico</div>
+        <div class="score-rows" id="score-rows"></div>
+        <div class="divider"></div>
+        <div class="section-label">Análisis y confluencias</div>
+        <ul class="bullets" id="bullets"></ul>
+      </div>
+      <div class="card-footer">
+        <span class="footer-meta" id="footer-meta"></span>
+        <div class="footer-right">
+          <div class="score-badge" id="score-badge"></div>
+          <button class="reset-btn" onclick="reset()">Nueva señal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+  let market = 'Todos', tf = 'Auto', mode = 'Auto (mejor setup)';
+
+  function initChips(id, setter) {
+    document.getElementById(id).querySelectorAll('.chip').forEach(c => {
+      c.addEventListener('click', function () {
+        document.getElementById(id).querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+        this.classList.add('active');
+        setter(this.dataset.val);
+      });
+    });
+  }
+  initChips('market-chips', v => market = v);
+  initChips('tf-chips', v => tf = v);
+  initChips('mode-chips', v => mode = v);
+
+  async function generate() {
+    const btn = document.getElementById('gen-btn');
+    const thinking = document.getElementById('thinking');
+    const signal = document.getElementById('signal');
+    const errEl = document.getElementById('error-msg');
+
+    btn.disabled = true;
+    signal.classList.remove('visible');
+    errEl.classList.remove('visible');
+    thinking.classList.add('visible');
+
+    try {
+      const res = await fetch('/api/signal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ market, tf, mode })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      render(data);
+    } catch (e) {
+      errEl.textContent = 'Error al generar señal: ' + e.message;
+      errEl.classList.add('visible');
+    } finally {
+      thinking.classList.remove('visible');
+      btn.disabled = false;
+    }
+  }
+
+  function render(d) {
+    const classBg = { Commodity:'rgba(45,212,191,0.12)', Forex:'rgba(124,111,247,0.12)', Índice:'rgba(99,102,241,0.12)', Crypto:'rgba(251,191,36,0.12)' };
+    const classFg = { Commodity:'#2dd4bf', Forex:'#a78bfa', Índice:'#818cf8', Crypto:'#fbbf24' };
+    const cls = d.clase || 'Forex';
+    const icon = document.getElementById('a-icon');
+    icon.style.background = classBg[cls] || classBg.Forex;
+    icon.style.color = classFg[cls] || classFg.Forex;
+    icon.textContent = (d.activo || '').slice(0,3);
+
+    document.getElementById('a-name').textContent = d.activo || '';
+    document.getElementById('a-sub').textContent = `${d.modo} · ${d.tf_entrada} · ${d.orden_tipo}`;
+
+    const dir = document.getElementById('a-dir');
+    dir.textContent = d.direccion;
+    dir.className = 'dir-badge ' + (d.direccion === 'Buy' ? 'dir-buy' : 'dir-sell');
+
+    document.getElementById('m-entry').textContent = Number(d.entrada).toFixed(2);
+    document.getElementById('m-sl').textContent = Number(d.sl).toFixed(2);
+    document.getElementById('m-tp').textContent = Number(d.tp).toFixed(2);
+    document.getElementById('m-rr').textContent = Number(d.rr).toFixed(2) + ':1';
+
+    document.getElementById('score-rows').innerHTML = (d.scores || []).map(s => {
+      const pct = Math.round((s.val / s.max) * 100);
+      const col = pct >= 80 ? '#34d399' : pct >= 60 ? '#a78bfa' : '#f87171';
+      return `<div class="score-row">
+        <span class="score-name">${s.label}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="score-num">${s.val}/${s.max}</span>
+      </div>`;
+    }).join('');
+
+    const items = [...(d.confluencias || [])];
+    if (d.prox_noticia) items.push(d.prox_noticia);
+    document.getElementById('bullets').innerHTML = items.map(i => `<li>${i}</li>`).join('');
+
+    document.getElementById('footer-meta').textContent = `${d.hora_clt} · ${d.precio_actual} · ${d.precio_fuente}`;
+
+    const score = d.score_total || 0;
+    const badge = document.getElementById('score-badge');
+    badge.textContent = `${score}/100 · ${d.veredicto}`;
+    badge.className = 'score-badge ' + (score >= 85 ? 'badge-ok' : score >= 70 ? 'badge-warn' : 'badge-bad');
+
+    document.getElementById('signal').classList.add('visible');
+  }
+
+  function reset() {
+    document.getElementById('signal').classList.remove('visible');
+  }
+</script>
+</body>
+</html>
